@@ -3,6 +3,12 @@
 import logging
 
 import voluptuous as vol
+from homeassistant.components.media_player import (
+    MediaPlayerEntityFeature,
+)
+from homeassistant.const import (
+    ATTR_SUPPORTED_FEATURES,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
@@ -10,14 +16,6 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import llm
 from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
 from homeassistant.util.json import JsonObjectType
-
-from homeassistant.const import (
-    ATTR_SUPPORTED_FEATURES,
-)
-
-from homeassistant.components.media_player import (
-    MediaPlayerEntityFeature,
-)
 
 from .base_tool import BaseTool
 
@@ -132,7 +130,7 @@ def get_video_capable_media_players(
                 entity.entity_id,
             )
             continue
-        
+
         device_class_lower = device_class.lower()
         if device_class_lower in VIDEO_CAPABLE_DEVICE_CLASSES:
             _LOGGER.debug(
