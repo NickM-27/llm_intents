@@ -5,15 +5,18 @@ from __future__ import annotations
 import asyncio
 import logging
 import types
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from homeassistant.data_entry_flow import FlowResult
 from zoneinfo import available_timezones
 
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.weather import WeatherEntityFeature
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
@@ -94,8 +97,11 @@ STEP_CONFIGURE_WEATHER = "configure_weather"
 STEP_CONFIGURE_BASIC_UTILITIES = "configure_basic_utilities"
 
 
-class MyNumberSelector(NumberSelector):
+class NullableNumberSelector(NumberSelector):
+    """NumberSelector that allows for empty values."""
+
     def __call__(self, data: Any) -> float | None:
+        """Perform our validation."""
         # Handle for empty values
         if data == "" or data is None:
             return None
@@ -103,15 +109,17 @@ class MyNumberSelector(NumberSelector):
         value: float = vol.Coerce(float)(data)
 
         if "min" in self.config and value < self.config["min"]:
-            raise vol.Invalid(f"Value {value} is too small")
+            error_msg = f"Value {value} is too small"
+            raise vol.Invalid(error_msg)
 
         if "max" in self.config and value > self.config["max"]:
-            raise vol.Invalid(f"Value {value} is too large")
+            error_msg = f"Value {value} is too large"
+            raise vol.Invalid(error_msg)
 
         return value
 
 
-def get_step_user_data_schema(hass) -> vol.Schema:
+def get_step_user_data_schema(hass: HomeAssistant) -> vol.Schema:
     """Generate a static schema for the main menu to select services."""
     schema = {
         vol.Optional(
@@ -169,7 +177,7 @@ def merge_provider_api_keys_from_input(config_data: dict, user_input: dict) -> N
     config_data.pop(CONF_GOOGLE_PLACES_API_KEY, None)
 
 
-async def get_brave_schema(hass, is_llm_context_search: bool) -> vol.Schema:
+async def get_brave_schema(hass: HomeAssistant, is_llm_context_search: bool) -> vol.Schema:
     """Return the static schema for Brave service configuration."""
     iana_timezones = await asyncio.to_thread(available_timezones)
     iana_timezones = sorted(iana_timezones)
@@ -244,7 +252,7 @@ async def get_brave_schema(hass, is_llm_context_search: bool) -> vol.Schema:
         ),
         vol.Optional(
             CONF_BRAVE_LATITUDE, default=SERVICE_DEFAULTS.get(CONF_BRAVE_LATITUDE)
-        ): MyNumberSelector(
+        ): NullableNumberSelector(
             NumberSelectorConfig(
                 min=-90,
                 max=90,
@@ -255,7 +263,7 @@ async def get_brave_schema(hass, is_llm_context_search: bool) -> vol.Schema:
         ),
         vol.Optional(
             CONF_BRAVE_LONGITUDE, default=SERVICE_DEFAULTS.get(CONF_BRAVE_LONGITUDE)
-        ): MyNumberSelector(
+        ): NullableNumberSelector(
             NumberSelectorConfig(
                 min=-180,
                 max=180,
@@ -279,7 +287,7 @@ async def get_brave_schema(hass, is_llm_context_search: bool) -> vol.Schema:
     return vol.Schema(schema)
 
 
-async def get_searxng_schema(hass) -> vol.Schema:
+async def get_searxng_schema(hass: HomeAssistant) -> vol.Schema:
     """Return the static schema for the SearXNG service configuration."""
     return vol.Schema(
         {
@@ -302,7 +310,7 @@ async def get_searxng_schema(hass) -> vol.Schema:
     )
 
 
-async def get_google_places_schema(hass) -> vol.Schema:
+async def get_google_places_schema(hass: HomeAssistant) -> vol.Schema:
     """Return the static schema for Google Places service configuration."""
     return vol.Schema(
         {
@@ -325,7 +333,7 @@ async def get_google_places_schema(hass) -> vol.Schema:
             vol.Optional(
                 CONF_GOOGLE_PLACES_LATITUDE,
                 default=SERVICE_DEFAULTS.get(CONF_GOOGLE_PLACES_LATITUDE),
-            ): MyNumberSelector(
+            ): NullableNumberSelector(
                 NumberSelectorConfig(
                     min=-90,
                     max=90,
@@ -337,7 +345,7 @@ async def get_google_places_schema(hass) -> vol.Schema:
             vol.Optional(
                 CONF_GOOGLE_PLACES_LONGITUDE,
                 default=SERVICE_DEFAULTS.get(CONF_GOOGLE_PLACES_LONGITUDE),
-            ): MyNumberSelector(
+            ): NullableNumberSelector(
                 NumberSelectorConfig(
                     min=-180,
                     max=180,
@@ -371,7 +379,7 @@ async def get_google_places_schema(hass) -> vol.Schema:
     )
 
 
-async def get_youtube_schema(hass) -> vol.Schema:
+async def get_youtube_schema(hass: HomeAssistant) -> vol.Schema:
     """Return the static schema for YouTube service configuration."""
     return vol.Schema(
         {
@@ -383,7 +391,7 @@ async def get_youtube_schema(hass) -> vol.Schema:
     )
 
 
-async def get_wikipedia_schema(hass) -> vol.Schema:
+async def get_wikipedia_schema(hass: HomeAssistant) -> vol.Schema:
     """Return the static schema for Wikipedia service configuration."""
     return vol.Schema(
         {
@@ -403,7 +411,7 @@ async def get_wikipedia_schema(hass) -> vol.Schema:
     )
 
 
-async def get_basic_utilities_schema(hass) -> vol.Schema:
+async def get_basic_utilities_schema(hass: HomeAssistant) -> vol.Schema:
     """Return the static schema for Basic Utilities tool configuration."""
     return vol.Schema(
         {
@@ -423,7 +431,7 @@ async def get_basic_utilities_schema(hass) -> vol.Schema:
     )
 
 
-async def get_weather_schema(hass) -> vol.Schema:
+async def get_weather_schema(hass: HomeAssistant) -> vol.Schema:
     """Return the static schema for Weather configuration."""
     daily_entities = []
     hourly_entities = []
@@ -472,12 +480,12 @@ async def get_weather_schema(hass) -> vol.Schema:
     )
 
 
-async def get_brave_search_schema(hass, args=None) -> vol.Schema:
+async def get_brave_search_schema(hass: HomeAssistant, args=None) -> vol.Schema:
     """Return the static schema for Brave Search configuration."""
     return await get_brave_schema(hass, is_llm_context_search=False)
 
 
-async def get_brave_llm_schema(hass, args=None) -> vol.Schema:
+async def get_brave_llm_schema(hass: HomeAssistant, args=None) -> vol.Schema:
     """Return the static schema for Brave Search configuration."""
     return await get_brave_schema(hass, is_llm_context_search=True)
 
@@ -584,7 +592,6 @@ class LlmIntentsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial configuration step for the user."""
         # Check if entry already exists
         if self._async_current_entries():
-            # TODO: support a single instance of multiple LLM API types (diff tools)
             return self.async_abort(reason="single_instance_allowed")
 
         if user_input is None:

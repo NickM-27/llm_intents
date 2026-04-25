@@ -21,6 +21,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class BraveSearchTool(SearchWebTool):
+    """Tool for searching the web via Brave Web Search API."""
+
     async def async_search(
         self,
         query: str,
@@ -37,7 +39,8 @@ class BraveSearchTool(SearchWebTool):
         post_code = self.config.get(CONF_BRAVE_POST_CODE)
 
         if not api_key:
-            raise RuntimeError("Brave API key not configured")
+            error_msg = "Brave API key not configured"
+            raise RuntimeError(error_msg)
 
         session = async_get_clientsession(self.hass)
         headers = {
@@ -95,6 +98,5 @@ class BraveSearchTool(SearchWebTool):
                     results.append({"title": title, "content": result_content})
 
                 return results
-            raise RuntimeError(
-                f"Web search received a HTTP {resp.status} error from Brave: {response_content}"
-            )
+            error_msg = f"Web search received a HTTP {resp.status} error from Brave: {response_content}"
+            raise RuntimeError(error_msg)
