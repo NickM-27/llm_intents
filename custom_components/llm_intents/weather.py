@@ -55,7 +55,7 @@ def _friendly_precipitation_chance(precipitation_chance: int) -> str:
         if precipitation_chance <= 15
         else "possible"
         if precipitation_chance <= 30
-        else "moderate"
+        else "probable"
         if precipitation_chance <= 50
         else "likely"
         if precipitation_chance <= 70
