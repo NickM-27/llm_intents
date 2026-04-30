@@ -55,7 +55,7 @@ def _friendly_precipitation_chance(precipitation_chance: int) -> str:
         if precipitation_chance <= 15
         else "possible"
         if precipitation_chance <= 30
-        else "probable"
+        else "moderate"
         if precipitation_chance <= 50
         else "likely"
         if precipitation_chance <= 70
@@ -222,7 +222,7 @@ class WeatherForecastTool(BaseTool):
             WeatherAttribute(key="condition", name="General Condition", formatter=None),
             WeatherAttribute(
                 key="precipitation_probability",
-                name="Precipitation",
+                name="Chance of Precipitation",
                 formatter=_friendly_precipitation_chance,
             ),
         ]
@@ -272,7 +272,7 @@ class WeatherForecastTool(BaseTool):
             WeatherAttribute(key="condition", name="General Condition", formatter=None),
             WeatherAttribute(
                 key="precipitation_probability",
-                name="Precipitation",
+                name="Chance of Precipitation",
                 formatter=_friendly_precipitation_chance,
             ),
         ]
@@ -336,7 +336,7 @@ class WeatherForecastTool(BaseTool):
         hourly_attributes = [
             WeatherAttribute(name="General Condition", key="condition", formatter=None),
             WeatherAttribute(
-                name="Precipitation",
+                name="Chance of Precipitation",
                 key="precipitation_probability",
                 formatter=_friendly_precipitation_chance,
             ),
